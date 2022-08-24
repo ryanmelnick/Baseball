@@ -1,0 +1,696 @@
+---
+title: "10 Second Rule ResearFast"
+author: "Ryan Melnick"
+date: "8/8/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_Fastunk$set(eFasto = TRUE)
+```
+
+```{r}
+rm(list = ls())
+
+# need to Fastange file path to be able to read in tmAll.RDS on your computer
+tmAll_ACCSEC <- readRDS('~/Downloads/tmAll_ACCSEC.RDS')
+head(tmAll_ACCSEC)
+install.packages("magrittr") # package installations are only needed the first time you use it
+install.packages("dplyr")    # alternative installation of the %>%
+library(magrittr) # needs to be run every time you start R and want to use %>%
+library(dplyr)    # alternatively, this also loads %>%
+library(data.table)
+```
+
+```{r}
+table(tmAll_ACCSEC$TaggedPitchType)
+
+AllFastballs <- subset(tmAll_ACCSEC, TaggedPitchType == 'FF' | TaggedPitchType == 'FT')
+FastballUsage = round((nrow(AllFastballs)/nrow(tmAll_ACCSEC))*100,0)
+
+AllCH <- subset(tmAll_ACCSEC, TaggedPitchType == 'CH')
+CH_Usage = round((nrow(AllCH)/nrow(tmAll_ACCSEC))*100,0)
+
+AllCB <- subset(tmAll_ACCSEC, TaggedPitchType == 'CB')
+CB_Usage = round((nrow(AllCB)/nrow(tmAll_ACCSEC))*100,0)
+
+AllSL <- subset(tmAll_ACCSEC, TaggedPitchType == 'SL')
+SL_Usage = round((nrow(AllSL)/nrow(tmAll_ACCSEC))*100,0)
+
+AllSPIN <- subset(tmAll_ACCSEC, TaggedPitchType == 'SL' | TaggedPitchType == 'CB')
+SPIN_Usage = round((nrow(AllSPIN)/nrow(tmAll_ACCSEC))*100,0)
+```
+
+```{r}
+library(dplyr)
+
+test <- as.data.table(tmAll_ACCSEC)
+
+test5 <- test
+
+test5 <- test[ ,prevpitchtype := shift(TaggedPitchType)]
+test5 <- test5[ ,prevpitchcall := shift(PitchCall)]
+
+test5 %>% group_by(TaggedPitchType, PitchCall) %>% summarise(c = n())
+```
+
+```{r}
+FastAfterWhiff <- subset(test5, (prevpitchtype %in% c('FF', 'FT') & prevpitchcall == 'StrikeSwinging') & 
+                  PitchofPA != '1' & (TaggedPitchType == 'FF' | TaggedPitchType == 'FT'))
+
+FastAfterWhiff %>% select(TaggedPitchType, PitchCall, PitchofPA, prevpitchtype, prevpitchcall)
+
+CHAfterWhiff <- subset(test5, (prevpitchtype %in% c('CH') & prevpitchcall == 'StrikeSwinging') & 
+                  PitchofPA != '1' & (TaggedPitchType == 'CH'))
+
+CHAfterWhiff %>% select(TaggedPitchType, PitchCall, PitchofPA, prevpitchtype, prevpitchcall)
+
+CBAfterWhiff <- subset(test5, (prevpitchtype %in% c('CB') & prevpitchcall == 'StrikeSwinging') & 
+                  PitchofPA != '1' & (TaggedPitchType == 'CB'))
+
+CBAfterWhiff %>% select(TaggedPitchType, PitchCall, PitchofPA, prevpitchtype, prevpitchcall)
+
+SLAfterWhiff <- subset(test5, (prevpitchtype %in% c('SL') & prevpitchcall == 'StrikeSwinging') & 
+                  PitchofPA != '1' & (TaggedPitchType == 'SL'))
+
+SLAfterWhiff %>% select(TaggedPitchType, PitchCall, PitchofPA, prevpitchtype, prevpitchcall)
+
+SPINAfterWhiff <- subset(test5, (prevpitchtype %in% c('CB', 'SL') & prevpitchcall == 'StrikeSwinging') & 
+                  PitchofPA != '1' & (TaggedPitchType == 'CB' | TaggedPitchType == 'SL'))
+
+SPINAfterWhiff %>% select(TaggedPitchType, PitchCall, PitchofPA, prevpitchtype, prevpitchcall)
+```
+
+```{r}
+FastWhiffs <- subset(test5, prevpitchcall == 'StrikeSwinging' & (prevpitchtype == 'FF' | prevpitchtype == 'FT'))
+
+CHWhiffs <- subset(test5, prevpitchcall == 'StrikeSwinging' & (prevpitchtype == 'CH'))
+
+CBWhiffs <- subset(test5, prevpitchcall == 'StrikeSwinging' & (prevpitchtype == 'CB'))
+
+SLWhiffs <- subset(test5, prevpitchcall == 'StrikeSwinging' & (prevpitchtype == 'SL'))
+
+SPINWhiffs <- subset(test5, prevpitchcall == 'StrikeSwinging' & (prevpitchtype == 'CH' | prevpitchtype == 'FT'))
+
+FastAfterWhiffUsage = round((nrow(FastAfterWhiff)/nrow(FastWhiffs))*100,0)
+
+CHAfterWhiffUsage = round((nrow(CHAfterWhiff)/nrow(CHWhiffs))*100,0)
+
+CBAfterWhiffUsage = round((nrow(CBAfterWhiff)/nrow(CBWhiffs))*100,0)
+
+SLAfterWhiffUsage = round((nrow(CHAfterWhiff)/nrow(SLWhiffs))*100,0)
+
+SPINAfterWhiffUsage = round((nrow(SPINAfterWhiff)/nrow(SPINWhiffs))*100,0)
+```
+
+
+```{r}
+PFast = nrow(AllFastballs)
+BattersFacedFast <- subset(AllFastballs, PitchofPA == '1')
+BFFast = nrow(BattersFacedFast)
+
+PFastWhiff = nrow(FastAfterWhiff)
+BattersFacedFastWhiff <- subset(FastAfterWhiff, PitchofPA == '2')
+BFFastWhiff = nrow(BattersFacedFastWhiff)
+
+PCH = nrow(AllCH)
+BattersFacedCH <- subset(AllCH, PitchofPA == '1')
+BFCH = nrow(BattersFacedCH)
+
+PCHWhiff = nrow(CHAfterWhiff)
+BattersFacedCHWhiff <- subset(CHAfterWhiff, PitchofPA == '2')
+BFCHWhiff = nrow(BattersFacedCHWhiff)
+
+PCB = nrow(AllCB)
+BattersFacedCB <- subset(AllCB, PitchofPA == '1')
+BFCB = nrow(BattersFacedCB)
+
+PCBWhiff = nrow(CBAfterWhiff)
+BattersFacedCBWhiff <- subset(CBAfterWhiff, PitchofPA == '2')
+BFCBWhiff = nrow(BattersFacedCBWhiff)
+
+PSL = nrow(AllSL)
+BattersFacedSL <- subset(AllSL, PitchofPA == '1')
+BFSL = nrow(BattersFacedSL)
+
+PSLWhiff = nrow(SLAfterWhiff)
+BattersFacedSLWhiff <- subset(SLAfterWhiff, PitchofPA == '2')
+BFSLWhiff = nrow(BattersFacedSLWhiff)
+
+PSPIN = nrow(AllSPIN)
+BattersFacedSPIN <- subset(AllSPIN, PitchofPA == '1')
+BFSPIN = nrow(BattersFacedSPIN)
+
+PSPINWhiff = nrow(SPINAfterWhiff)
+BattersFacedSPINWhiff <- subset(SPINAfterWhiff, PitchofPA == '2')
+BFSPINWhiff = nrow(BattersFacedSPINWhiff)
+```
+
+```{r}
+StrikeCalledFast <- subset(AllFastballs, PitchCall == 'StrikeCalled')
+InPlayFast <- subset(AllFastballs, PitchCall == 'InPlay')
+FoulballFast <- subset(AllFastballs, PitchCall == 'FoulBall')
+StrikeSwingingFast <- subset(AllFastballs, PitchCall == 'StrikeSwinging')
+
+StrikeCalledFastWhiff <- subset(FastWhiffs, PitchCall == 'StrikeCalled')
+InPlayFastWhiff <- subset(FastWhiffs, PitchCall == 'InPlay')
+FoulballFastWhiff <- subset(FastWhiffs, PitchCall == 'FoulBall')
+StrikeSwingingFastWhiff <- subset(FastWhiffs, PitchCall == 'StrikeSwinging')
+
+StrikeCalledCH <- subset(AllCH, PitchCall == 'StrikeCalled')
+InPlayCH <- subset(AllCH, PitchCall == 'InPlay')
+FoulballCH <- subset(AllCH, PitchCall == 'FoulBall')
+StrikeSwingingCH <- subset(AllCH, PitchCall == 'StrikeSwinging')
+
+StrikeCalledCHWhiff <- subset(CHWhiffs, PitchCall == 'StrikeCalled')
+InPlayCHWhiff <- subset(CHWhiffs, PitchCall == 'InPlay')
+FoulballCHWhiff <- subset(CHWhiffs, PitchCall == 'FoulBall')
+StrikeSwingingCHWhiff <- subset(CHWhiffs, PitchCall == 'StrikeSwinging')
+
+StrikeCalledCB <- subset(AllCB, PitchCall == 'StrikeCalled')
+InPlayCB <- subset(AllCB, PitchCall == 'InPlay')
+FoulballCB <- subset(AllCB, PitchCall == 'FoulBall')
+StrikeSwingingCB <- subset(AllCB, PitchCall == 'StrikeSwinging')
+
+StrikeCalledCBWhiff <- subset(CBWhiffs, PitchCall == 'StrikeCalled')
+InPlayCBWhiff <- subset(CBWhiffs, PitchCall == 'InPlay')
+FoulballCBWhiff <- subset(CBWhiffs, PitchCall == 'FoulBall')
+StrikeSwingingCBWhiff <- subset(CBWhiffs, PitchCall == 'StrikeSwinging')
+
+StrikeCalledSL <- subset(AllSL, PitchCall == 'StrikeCalled')
+InPlaySL <- subset(AllSL, PitchCall == 'InPlay')
+FoulballSL <- subset(AllSL, PitchCall == 'FoulBall')
+StrikeSwingingSL <- subset(AllSL, PitchCall == 'StrikeSwinging')
+
+StrikeCalledSLWhiff <- subset(SLWhiffs, PitchCall == 'StrikeCalled')
+InPlaySLWhiff <- subset(SLWhiffs, PitchCall == 'InPlay')
+FoulballSLWhiff <- subset(SLWhiffs, PitchCall == 'FoulBall')
+StrikeSwingingSLWhiff <- subset(SLWhiffs, PitchCall == 'StrikeSwinging')
+
+StrikeCalledSPIN <- subset(AllSPIN, PitchCall == 'StrikeCalled')
+InPlaySPIN <- subset(AllSPIN, PitchCall == 'InPlay')
+FoulballSPIN <- subset(AllSPIN, PitchCall == 'FoulBall')
+StrikeSwingingSPIN <- subset(AllSPIN, PitchCall == 'StrikeSwinging')
+
+StrikeCalledSPINWhiff <- subset(SPINWhiffs, PitchCall == 'StrikeCalled')
+InPlaySPINWhiff <- subset(SPINWhiffs, PitchCall == 'InPlay')
+FoulballSPINWhiff <- subset(SPINWhiffs, PitchCall == 'FoulBall')
+StrikeSwingingSPINWhiff <- subset(SPINWhiffs, PitchCall == 'StrikeSwinging')
+```
+
+```{r}
+StrikePercentageFast = round((nrow(StrikeCalledFast) + nrow(InPlayFast) + nrow(FoulballFast) + nrow(StrikeSwingingFast)) / (nrow(AllFastballs))*100,1)
+
+StrikePercentageFastWhiff = round((nrow(StrikeCalledFastWhiff) + nrow(InPlayFastWhiff) + nrow(FoulballFastWhiff) + nrow(StrikeSwingingFastWhiff)) / (nrow(FastWhiffs))*100,1)
+
+StrikePercentageCH = round((nrow(StrikeCalledCH) + nrow(InPlayCH) + nrow(FoulballCH) + nrow(StrikeSwingingCH)) / (nrow(AllCH))*100,1)
+
+StrikePercentageCHWhiff = round((nrow(StrikeCalledCHWhiff) + nrow(InPlayCHWhiff) + nrow(FoulballCHWhiff) + nrow(StrikeSwingingCHWhiff)) / (nrow(CHWhiffs))*100,1)
+
+StrikePercentageCB = round((nrow(StrikeCalledCB) + nrow(InPlayCB) + nrow(FoulballCB) + nrow(StrikeSwingingCB)) / (nrow(AllCB))*100,1)
+
+StrikePercentageCBWhiff = round((nrow(StrikeCalledCBWhiff) + nrow(InPlayCBWhiff) + nrow(FoulballCBWhiff) + nrow(StrikeSwingingCBWhiff)) / (nrow(CBWhiffs))*100,1)
+
+StrikePercentageSL = round((nrow(StrikeCalledSL) + nrow(InPlaySL) + nrow(FoulballSL) + nrow(StrikeSwingingSL)) / (nrow(AllSL))*100,1)
+
+StrikePercentageSLWhiff = round((nrow(StrikeCalledSLWhiff) + nrow(InPlaySLWhiff) + nrow(FoulballSLWhiff) + nrow(StrikeSwingingSLWhiff)) / (nrow(SLWhiffs))*100,1)
+
+StrikePercentageSPIN = round((nrow(StrikeCalledSPIN) + nrow(InPlaySPIN) + nrow(FoulballSPIN) + nrow(StrikeSwingingSPIN)) / (nrow(AllSPIN))*100,1)
+
+StrikePercentageSPINWhiff = round((nrow(StrikeCalledSPINWhiff) + nrow(InPlaySPINWhiff) + nrow(FoulballSPINWhiff) + nrow(StrikeSwingingSPINWhiff)) / (nrow(SPINWhiffs))*100,1)
+```
+
+```{r}
+WhiffPercentageFast = round((nrow(StrikeSwingingFast)) / (nrow(InPlayFast) + nrow(FoulballFast) + nrow(StrikeSwingingFast))*100,1)
+
+WhiffPercentageFastWhiff = round((nrow(StrikeSwingingFastWhiff)) / (nrow(InPlayFastWhiff) + nrow(FoulballFastWhiff) + nrow(StrikeSwingingFastWhiff))*100,1)
+
+WhiffPercentageCH = round((nrow(StrikeSwingingCH)) / (nrow(InPlayCH) + nrow(FoulballCH) + nrow(StrikeSwingingCH))*100,1)
+
+WhiffPercentageCHWhiff = round((nrow(StrikeSwingingCHWhiff)) / (nrow(InPlayCHWhiff) + nrow(FoulballCHWhiff) + nrow(StrikeSwingingCHWhiff))*100,1)
+
+WhiffPercentageCB = round((nrow(StrikeSwingingCB)) / (nrow(InPlayCB) + nrow(FoulballCB) + nrow(StrikeSwingingCB))*100,1)
+
+WhiffPercentageCBWhiff = round((nrow(StrikeSwingingCBWhiff)) / (nrow(InPlayCBWhiff) + nrow(FoulballCBWhiff) + nrow(StrikeSwingingCBWhiff))*100,1)
+
+WhiffPercentageSL = round((nrow(StrikeSwingingSL)) / (nrow(InPlaySL) + nrow(FoulballSL) + nrow(StrikeSwingingSL))*100,1)
+
+WhiffPercentageSLWhiff = round((nrow(StrikeSwingingSLWhiff)) / (nrow(InPlaySLWhiff) + nrow(FoulballSLWhiff) + nrow(StrikeSwingingSLWhiff))*100,1)
+
+WhiffPercentageSPIN = round((nrow(StrikeSwingingSPIN)) / (nrow(InPlaySPIN) + nrow(FoulballSPIN) + nrow(StrikeSwingingSPIN))*100,1)
+
+WhiffPercentageSPINWhiff = round((nrow(StrikeSwingingSPINWhiff)) / (nrow(InPlaySPINWhiff) + nrow(FoulballSPINWhiff) + nrow(StrikeSwingingSPINWhiff))*100,1)
+```
+
+```{r}
+AllFastballs$Hit = ifelse((AllFastballs$PlayResult == 'Single' | AllFastballs$PlayResult == 'Double' | AllFastballs$PlayResult == 'Triple' | AllFastballs$PlayResult == 'HomeRun'),1,0)
+
+FastWhiffs$Hit = ifelse((FastWhiffs$PlayResult == 'Single' | FastWhiffs$PlayResult == 'Double' | FastWhiffs$PlayResult == 'Triple' | FastWhiffs$PlayResult == 'HomeRun'),1,0)
+
+AllCH$Hit = ifelse((AllCH$PlayResult == 'Single' | AllCH$PlayResult == 'Double' | AllCH$PlayResult == 'Triple' | AllCH$PlayResult == 'HomeRun'),1,0)
+
+CHWhiffs$Hit = ifelse((CHWhiffs$PlayResult == 'Single' | CHWhiffs$PlayResult == 'Double' | CHWhiffs$PlayResult == 'Triple' | CHWhiffs$PlayResult == 'HomeRun'),1,0)
+
+AllCB$Hit = ifelse((AllCB$PlayResult == 'Single' | AllCB$PlayResult == 'Double' | AllCB$PlayResult == 'Triple' | AllCB$PlayResult == 'HomeRun'),1,0)
+
+CBWhiffs$Hit = ifelse((CBWhiffs$PlayResult == 'Single' | CBWhiffs$PlayResult == 'Double' | CBWhiffs$PlayResult == 'Triple' | CBWhiffs$PlayResult == 'HomeRun'),1,0)
+
+AllSL$Hit = ifelse((AllSL$PlayResult == 'Single' | AllSL$PlayResult == 'Double' | AllSL$PlayResult == 'Triple' | AllSL$PlayResult == 'HomeRun'),1,0)
+
+SLWhiffs$Hit = ifelse((SLWhiffs$PlayResult == 'Single' | SLWhiffs$PlayResult == 'Double' | SLWhiffs$PlayResult == 'Triple' | SLWhiffs$PlayResult == 'HomeRun'),1,0)
+
+AllSPIN$Hit = ifelse((AllSPIN$PlayResult == 'Single' | AllSPIN$PlayResult == 'Double' | AllSPIN$PlayResult == 'Triple' | AllSPIN$PlayResult == 'HomeRun'),1,0)
+
+SPINWhiffs$Hit = ifelse((SPINWhiffs$PlayResult == 'Single' | SPINWhiffs$PlayResult == 'Double' | SPINWhiffs$PlayResult == 'Triple' | SPINWhiffs$PlayResult == 'HomeRun'),1,0)
+```
+
+```{r}
+AllFastballs$NotAB = ifelse((AllFastballs$PlayResult == 'Sacrifice' | AllFastballs$KorBB == 'Walk' | AllFastballs$PitchCall == 'HitByPitch'),1,0)
+
+FastWhiffs$NotAB = ifelse((FastWhiffs$PlayResult == 'Sacrifice' | FastWhiffs$KorBB == 'Walk' | FastWhiffs$PitchCall == 'HitByPitch'),1,0)
+
+AllCH$NotAB = ifelse((AllCH$PlayResult == 'Sacrifice' | AllCH$KorBB == 'Walk' | AllCH$PitchCall == 'HitByPitch'),1,0)
+
+CHWhiffs$NotAB = ifelse((CHWhiffs$PlayResult == 'Sacrifice' | CHWhiffs$KorBB == 'Walk' | CHWhiffs$PitchCall == 'HitByPitch'),1,0)
+
+AllCB$NotAB = ifelse((AllCB$PlayResult == 'Sacrifice' | AllCB$KorBB == 'Walk' | AllCB$PitchCall == 'HitByPitch'),1,0)
+
+CBWhiffs$NotAB = ifelse((CBWhiffs$PlayResult == 'Sacrifice' | CBWhiffs$KorBB == 'Walk' | CBWhiffs$PitchCall == 'HitByPitch'),1,0)
+
+AllSL$NotAB = ifelse((AllSL$PlayResult == 'Sacrifice' | AllSL$KorBB == 'Walk' | AllSL$PitchCall == 'HitByPitch'),1,0)
+
+SLWhiffs$NotAB = ifelse((SLWhiffs$PlayResult == 'Sacrifice' | SLWhiffs$KorBB == 'Walk' | SLWhiffs$PitchCall == 'HitByPitch'),1,0)
+
+AllSPIN$NotAB = ifelse((AllSPIN$PlayResult == 'Sacrifice' | AllSPIN$KorBB == 'Walk' | AllSPIN$PitchCall == 'HitByPitch'),1,0)
+
+SPINWhiffs$NotAB = ifelse((SPINWhiffs$PlayResult == 'Sacrifice' | SPINWhiffs$KorBB == 'Walk' | SPINWhiffs$PitchCall == 'HitByPitch'),1,0)
+```
+
+```{r}
+notFastAB = sum(AllFastballs$NotAB)
+FastAtBats = BFFast - notFastAB
+
+notFastWhiffAB = sum(FastWhiffs$NotAB)
+FastWhiffAtBats = BFFastWhiff - notFastWhiffAB
+
+notCHAB = sum(AllCH$NotAB)
+CHAtBats = BFCH - notCHAB
+
+notCHWhiffAB = sum(CHWhiffs$NotAB)
+CHWhiffAtBats = BFCHWhiff - notCHWhiffAB
+
+notCBAB = sum(AllCB$NotAB)
+CBAtBats = BFCB - notCBAB
+
+notCBWhiffAB = sum(CBWhiffs$NotAB)
+CBWhiffAtBats = BFCBWhiff - notCBWhiffAB
+
+notSLAB = sum(AllSL$NotAB)
+SLAtBats = BFSL - notSLAB
+
+notSLWhiffAB = sum(SLWhiffs$NotAB)
+SLWhiffAtBats = BFSLWhiff - notSLWhiffAB
+
+notSPINAB = sum(AllSPIN$NotAB)
+SPINAtBats = BFSPIN - notSPINAB
+
+notSPINWhiffAB = sum(SPINWhiffs$NotAB)
+SPINWhiffAtBats = BFSPINWhiff - notSPINWhiffAB
+```
+
+```{r}
+HitsFast = sum(AllFastballs$Hit)
+
+HitsFastWhiff = sum(FastWhiffs$Hit)
+
+HitsCH = sum(AllCH$Hit)
+
+HitsCHWhiff = sum(CHWhiffs$Hit)
+
+HitsCB = sum(AllCB$Hit)
+
+HitsCBWhiff = sum(CBWhiffs$Hit)
+
+HitsSL = sum(AllSL$Hit)
+
+HitsSLWhiff = sum(SLWhiffs$Hit)
+
+HitsSPIN = sum(AllSPIN$Hit)
+
+HitsSPINWhiff = sum(SPINWhiffs$Hit)
+```
+
+```{r}
+AllFastballs$Single = ifelse((AllFastballs$PlayResult == 'Single'),1,0)
+FastWhiffs$Single = ifelse((FastWhiffs$PlayResult == 'Single'),1,0)
+                        
+AllCH$Single = ifelse((AllCH$PlayResult == 'Single'),1,0)
+CHWhiffs$Single = ifelse((CHWhiffs$PlayResult == 'Single'),1,0)
+
+AllCB$Single = ifelse((AllCB$PlayResult == 'Single'),1,0)
+CBWhiffs$Single = ifelse((CBWhiffs$PlayResult == 'Single'),1,0)
+
+AllSL$Single = ifelse((AllSL$PlayResult == 'Single'),1,0)
+SLWhiffs$Single = ifelse((SLWhiffs$PlayResult == 'Single'),1,0)
+
+AllSPIN$Single = ifelse((AllSPIN$PlayResult == 'Single'),1,0)
+SPINWhiffs$Single = ifelse((SPINWhiffs$PlayResult == 'Single'),1,0)
+
+AllFastballs$Double = ifelse((AllFastballs$PlayResult == 'Double'),1,0)
+FastWhiffs$Double = ifelse((FastWhiffs$PlayResult == 'Double'),1,0)
+                        
+AllCH$Double = ifelse((AllCH$PlayResult == 'Double'),1,0)
+CHWhiffs$Double = ifelse((CHWhiffs$PlayResult == 'Double'),1,0)
+
+AllCB$Double = ifelse((AllCB$PlayResult == 'Double'),1,0)
+CBWhiffs$Double = ifelse((CBWhiffs$PlayResult == 'Double'),1,0)
+
+AllSL$Double = ifelse((AllSL$PlayResult == 'Double'),1,0)
+SLWhiffs$Double = ifelse((SLWhiffs$PlayResult == 'Double'),1,0)
+
+AllSPIN$Double = ifelse((AllSPIN$PlayResult == 'Double'),1,0)
+SPINWhiffs$Double = ifelse((SPINWhiffs$PlayResult == 'Double'),1,0)
+
+AllFastballs$Triple = ifelse((AllFastballs$PlayResult == 'Triple'),1,0)
+FastWhiffs$Triple = ifelse((FastWhiffs$PlayResult == 'Triple'),1,0)
+                        
+AllCH$Triple = ifelse((AllCH$PlayResult == 'Triple'),1,0)
+CHWhiffs$Triple = ifelse((CHWhiffs$PlayResult == 'Triple'),1,0)
+
+AllCB$Triple = ifelse((AllCB$PlayResult == 'Triple'),1,0)
+CBWhiffs$Triple = ifelse((CBWhiffs$PlayResult == 'Triple'),1,0)
+
+AllSL$Triple = ifelse((AllSL$PlayResult == 'Triple'),1,0)
+SLWhiffs$Triple = ifelse((SLWhiffs$PlayResult == 'Triple'),1,0)
+
+AllSPIN$Triple = ifelse((AllSPIN$PlayResult == 'Triple'),1,0)
+SPINWhiffs$Triple = ifelse((SPINWhiffs$PlayResult == 'Triple'),1,0)
+
+AllFastballs$Home_run = ifelse((AllFastballs$PlayResult == 'HomeRun'),1,0)
+FastWhiffs$Home_run = ifelse((FastWhiffs$PlayResult == 'HomeRun'),1,0)
+                        
+AllCH$Home_run = ifelse((AllCH$PlayResult == 'HomeRun'),1,0)
+CHWhiffs$Home_run = ifelse((CHWhiffs$PlayResult == 'HomeRun'),1,0)
+
+AllCB$Home_run = ifelse((AllCB$PlayResult == 'HomeRun'),1,0)
+CBWhiffs$Home_run = ifelse((CBWhiffs$PlayResult == 'HomeRun'),1,0)
+
+AllSL$Home_run = ifelse((AllSL$PlayResult == 'HomeRun'),1,0)
+SLWhiffs$Home_run = ifelse((SLWhiffs$PlayResult == 'HomeRun'),1,0)
+
+AllSPIN$Home_run = ifelse((AllSPIN$PlayResult == 'HomeRun'),1,0)
+SPINWhiffs$Home_run = ifelse((SPINWhiffs$PlayResult == 'HomeRun'),1,0)
+```
+
+```{r}
+FastSingles = sum(AllFastballs$Single)
+FastWhiffSingles = sum(FastWhiffs$Single)
+
+CHSingles = sum(AllCH$Single)
+CHWhiffSingles = sum(CHWhiffs$Single)
+
+CBSingles = sum(AllCB$Single)
+CBWhiffSingles = sum(CBWhiffs$Single)
+
+SLSingles = sum(AllSL$Single)
+SLWhiffSingles = sum(SLWhiffs$Single)
+
+SPINSingles = sum(AllSPIN$Single)
+SPINWhiffSingles = sum(SPINWhiffs$Single)
+
+FastDoubles = sum(AllFastballs$Double)
+FastWhiffDoubles = sum(FastWhiffs$Double)
+
+CHDoubles = sum(AllCH$Double)
+CHWhiffDoubles = sum(CHWhiffs$Double)
+
+CBDoubles = sum(AllCB$Double)
+CBWhiffDoubles = sum(CBWhiffs$Double)
+
+SLDoubles = sum(AllSL$Double)
+SLWhiffDoubles = sum(SLWhiffs$Double)
+
+SPINDoubles = sum(AllSPIN$Double)
+SPINWhiffDoubles = sum(SPINWhiffs$Double)
+
+FastTriples = sum(AllFastballs$Triple)
+FastWhiffTriples = sum(FastWhiffs$Triple)
+
+CHTriples = sum(AllCH$Triple)
+CHWhiffTriples = sum(CHWhiffs$Triple)
+
+CBTriples = sum(AllCB$Triple)
+CBWhiffTriples = sum(CBWhiffs$Triple)
+
+SLTriples = sum(AllSL$Triple)
+SLWhiffTriples = sum(SLWhiffs$Triple)
+
+SPINTriples = sum(AllSPIN$Triple)
+SPINWhiffTriples = sum(SPINWhiffs$Triple)
+
+FastHome_runs = sum(AllFastballs$Home_run)
+FastWhiffHome_runs = sum(FastWhiffs$Home_run)
+
+CHHome_runs = sum(AllCH$Home_run)
+CHWhiffHome_runs = sum(CHWhiffs$Home_run)
+
+CBHome_runs = sum(AllCB$Home_run)
+CBWhiffHome_runs = sum(CBWhiffs$Home_run)
+
+SLHome_runs = sum(AllSL$Home_run)
+SLWhiffHome_runs = sum(SLWhiffs$Home_run)
+
+SPINHome_runs = sum(AllSPIN$Home_run)
+SPINWhiffHome_runs = sum(SPINWhiffs$Home_run)
+```
+
+
+```{r}
+BAFast = round(((HitsFast/FastAtBats)),3)
+SLGFast = round((((FastSingles*1)+(FastDoubles*2)+(FastTriples*3)+(FastHome_runs*4))/FastAtBats),3)
+
+BAFastWhiff = round(((HitsFastWhiff/FastWhiffAtBats)),3)
+SLGFastWhiff = round((((FastWhiffSingles*1)+(FastWhiffDoubles*2)+(FastWhiffTriples*3)+(FastWhiffHome_runs*4))/FastWhiffAtBats),3)
+
+BACH = round(((HitsCH/CHAtBats)),3)
+SLGCH = round((((CHSingles*1)+(CHDoubles*2)+(CHTriples*3)+(CHHome_runs*4))/CHAtBats),3)
+
+BACHWhiff = round(((HitsCHWhiff/CHWhiffAtBats)),3)
+SLGCHWhiff = round((((CHWhiffSingles*1)+(CHWhiffDoubles*2)+(CHWhiffTriples*3)+(CHWhiffHome_runs*4))/CHWhiffAtBats),3)
+
+BACB = round(((HitsCB/CBAtBats)),3)
+SLGCB = round((((CBSingles*1)+(CBDoubles*2)+(CBTriples*3)+(CBHome_runs*4))/CBAtBats),3)
+  
+BACBWhiff = round(((HitsCBWhiff/CBWhiffAtBats)),3)
+SLGCBWhiff = round((((CBWhiffSingles*1)+(CBWhiffDoubles*2)+(CBWhiffTriples*3)+(CBWhiffHome_runs*4))/CBWhiffAtBats),3)
+
+BASL = round(((HitsSL/SLAtBats)),3)
+SLGSL = round((((SLSingles*1)+(SLDoubles*2)+(SLTriples*3)+(SLHome_runs*4))/SLAtBats),3)
+  
+BASLWhiff = round(((HitsSLWhiff/SLWhiffAtBats)),3)
+SLGSLWhiff = round((((SLWhiffSingles*1)+(SLWhiffDoubles*2)+(SLWhiffTriples*3)+(SLWhiffHome_runs*4))/SLWhiffAtBats),3)
+
+BASPIN = round(((HitsSPIN/SPINAtBats)),3)
+SLGSPIN = round((((SPINSingles*1)+(SPINDoubles*2)+(SPINTriples*3)+(SPINHome_runs*4))/SPINAtBats),3)
+  
+BASPINWhiff = round(((HitsSPINWhiff/SPINWhiffAtBats)),3)
+SLGSPINWhiff = round((((SPINWhiffSingles*1)+(SPINWhiffDoubles*2)+(SPINWhiffTriples*3)+(SPINWhiffHome_runs*4))/SPINWhiffAtBats),3)
+```
+
+```{r}
+InZoneFast <- subset(AllFastballs, PlateLocSide >= -0.95 & PlateLocSide <= 0.95 & PlateLocHeight >= 1.5 & PlateLocHeight <= 3.5)
+OutZoneFast <- subset(AllFastballs, PlateLocSide < -0.95 | PlateLocSide > 0.95 | PlateLocHeight < 1.5 | PlateLocHeight > 3.5 )
+
+InZoneFastWhiff <- subset(FastWhiffs, PlateLocSide >= -0.95 & PlateLocSide <= 0.95 & PlateLocHeight >= 1.5 & PlateLocHeight <= 3.5)
+OutZoneFastWhiff <- subset(FastWhiffs, PlateLocSide < -0.95 | PlateLocSide > 0.95 | PlateLocHeight < 1.5 | PlateLocHeight > 3.5 )
+
+InZoneCH <- subset(AllCH, PlateLocSide >= -0.95 & PlateLocSide <= 0.95 & PlateLocHeight >= 1.5 & PlateLocHeight <= 3.5)
+OutZoneCH <- subset(AllCH, PlateLocSide < -0.95 | PlateLocSide > 0.95 | PlateLocHeight < 1.5 | PlateLocHeight > 3.5 )
+
+InZoneCHWhiff <- subset(CHWhiffs, PlateLocSide >= -0.95 & PlateLocSide <= 0.95 & PlateLocHeight >= 1.5 & PlateLocHeight <= 3.5)
+OutZoneCHWhiff <- subset(CHWhiffs, PlateLocSide < -0.95 | PlateLocSide > 0.95 | PlateLocHeight < 1.5 | PlateLocHeight > 3.5 )
+
+InZoneCB <- subset(AllCB, PlateLocSide >= -0.95 & PlateLocSide <= 0.95 & PlateLocHeight >= 1.5 & PlateLocHeight <= 3.5)
+OutZoneCB <- subset(AllCB, PlateLocSide < -0.95 | PlateLocSide > 0.95 | PlateLocHeight < 1.5 | PlateLocHeight > 3.5 )
+
+InZoneCBWhiff <- subset(CBWhiffs, PlateLocSide >= -0.95 & PlateLocSide <= 0.95 & PlateLocHeight >= 1.5 & PlateLocHeight <= 3.5)
+OutZoneCBWhiff <- subset(CBWhiffs, PlateLocSide < -0.95 | PlateLocSide > 0.95 | PlateLocHeight < 1.5 | PlateLocHeight > 3.5 )
+
+InZoneSL <- subset(AllSL, PlateLocSide >= -0.95 & PlateLocSide <= 0.95 & PlateLocHeight >= 1.5 & PlateLocHeight <= 3.5)
+OutZoneSL <- subset(AllSL, PlateLocSide < -0.95 | PlateLocSide > 0.95 | PlateLocHeight < 1.5 | PlateLocHeight > 3.5 )
+
+InZoneSLWhiff <- subset(SLWhiffs, PlateLocSide >= -0.95 & PlateLocSide <= 0.95 & PlateLocHeight >= 1.5 & PlateLocHeight <= 3.5)
+OutZoneSLWhiff <- subset(SLWhiffs, PlateLocSide < -0.95 | PlateLocSide > 0.95 | PlateLocHeight < 1.5 | PlateLocHeight > 3.5 )
+
+InZoneSPIN <- subset(AllSPIN, PlateLocSide >= -0.95 & PlateLocSide <= 0.95 & PlateLocHeight >= 1.5 & PlateLocHeight <= 3.5)
+OutZoneSPIN <- subset(AllSPIN, PlateLocSide < -0.95 | PlateLocSide > 0.95 | PlateLocHeight < 1.5 | PlateLocHeight > 3.5 )
+
+InZoneSPINWhiff <- subset(SPINWhiffs, PlateLocSide >= -0.95 & PlateLocSide <= 0.95 & PlateLocHeight >= 1.5 & PlateLocHeight <= 3.5)
+OutZoneSPINWhiff <- subset(SPINWhiffs, PlateLocSide < -0.95 | PlateLocSide > 0.95 | PlateLocHeight < 1.5 | PlateLocHeight > 3.5 )
+```
+
+```{r}
+InZonePercentageFast = round((nrow(InZoneFast) / nrow(AllFastballs))*100,2)
+
+InZonePercentageFastWhiff = round((nrow(InZoneFastWhiff) / nrow(FastWhiffs))*100,2)
+
+InZonePercentageCH = round((nrow(InZoneCH) / nrow(AllCH))*100,2)
+
+InZonePercentageCHWhiff = round((nrow(InZoneCHWhiff) / nrow(CHWhiffs))*100,2)
+
+InZonePercentageCB = round((nrow(InZoneCB) / nrow(AllCB))*100,2)
+
+InZonePercentageCBWhiff = round((nrow(InZoneCBWhiff) / nrow(CBWhiffs))*100,2)
+
+InZonePercentageSL = round((nrow(InZoneSL) / nrow(AllSL))*100,2)
+
+InZonePercentageSLWhiff = round((nrow(InZoneSLWhiff) / nrow(SLWhiffs))*100,2)
+
+InZonePercentageSPIN = round((nrow(InZoneSPIN) / nrow(AllSPIN))*100,2)
+
+InZonePercentageSPINWhiff = round((nrow(InZoneSPINWhiff) / nrow(SPINWhiffs))*100,2)
+```
+
+
+```{r}
+InPlayOZFast <- subset(OutZoneFast, PitchCall == 'InPlay')
+FoulballOZFast <- subset(OutZoneFast, PitchCall == 'FoulBall')
+StrikeSwingingOZFast <- subset(OutZoneFast, PitchCall == 'StrikeSwinging')
+
+InPlayOZFastWhiff <- subset(OutZoneFastWhiff, PitchCall == 'InPlay')
+FoulballOZFastWhiff <- subset(OutZoneFastWhiff, PitchCall == 'FoulBall')
+StrikeSwingingOZFastWhiff <- subset(OutZoneFastWhiff, PitchCall == 'StrikeSwinging')
+
+InPlayOZCH <- subset(OutZoneCH, PitchCall == 'InPlay')
+FoulballOZCH <- subset(OutZoneCH, PitchCall == 'FoulBall')
+StrikeSwingingOZCH <- subset(OutZoneCH, PitchCall == 'StrikeSwinging')
+
+InPlayOZCHWhiff <- subset(OutZoneCHWhiff, PitchCall == 'InPlay')
+FoulballOZCHWhiff <- subset(OutZoneCHWhiff, PitchCall == 'FoulBall')
+StrikeSwingingOZCHWhiff <- subset(OutZoneCHWhiff, PitchCall == 'StrikeSwinging')
+
+InPlayOZCB <- subset(OutZoneCB, PitchCall == 'InPlay')
+FoulballOZCB <- subset(OutZoneCB, PitchCall == 'FoulBall')
+StrikeSwingingOZCB <- subset(OutZoneCB, PitchCall == 'StrikeSwinging')
+
+InPlayOZCBWhiff <- subset(OutZoneCBWhiff, PitchCall == 'InPlay')
+FoulballOZCBWhiff <- subset(OutZoneCBWhiff, PitchCall == 'FoulBall')
+StrikeSwingingOZCBWhiff <- subset(OutZoneCBWhiff, PitchCall == 'StrikeSwinging')
+
+InPlayOZSL <- subset(OutZoneSL, PitchCall == 'InPlay')
+FoulballOZSL <- subset(OutZoneSL, PitchCall == 'FoulBall')
+StrikeSwingingOZSL <- subset(OutZoneSL, PitchCall == 'StrikeSwinging')
+
+InPlayOZSLWhiff <- subset(OutZoneSLWhiff, PitchCall == 'InPlay')
+FoulballOZSLWhiff <- subset(OutZoneSLWhiff, PitchCall == 'FoulBall')
+StrikeSwingingOZSLWhiff <- subset(OutZoneSLWhiff, PitchCall == 'StrikeSwinging')
+
+InPlayOZSPIN <- subset(OutZoneSPIN, PitchCall == 'InPlay')
+FoulballOZSPIN <- subset(OutZoneSPIN, PitchCall == 'FoulBall')
+StrikeSwingingOZSPIN <- subset(OutZoneSPIN, PitchCall == 'StrikeSwinging')
+
+InPlayOZSPINWhiff <- subset(OutZoneSPINWhiff, PitchCall == 'InPlay')
+FoulballOZSPINWhiff <- subset(OutZoneSPINWhiff, PitchCall == 'FoulBall')
+StrikeSwingingOZSPINWhiff <- subset(OutZoneSPINWhiff, PitchCall == 'StrikeSwinging')
+```
+
+```{r}
+FastChasePercentage = round((nrow(InPlayOZFast) + nrow(FoulballOZFast) + nrow(StrikeSwingingOZFast)) / nrow(OutZoneFast) *100,1)
+
+FastWhiffChasePercentage = round((nrow(InPlayOZFastWhiff) + nrow(FoulballOZFastWhiff) + nrow(StrikeSwingingOZFastWhiff)) / nrow(OutZoneFastWhiff) *100,1)
+
+CHChasePercentage = round((nrow(InPlayOZCH) + nrow(FoulballOZCH) + nrow(StrikeSwingingOZCH)) / nrow(OutZoneCH) *100,1)
+
+CHWhiffChasePercentage = round((nrow(InPlayOZCHWhiff) + nrow(FoulballOZCHWhiff) + nrow(StrikeSwingingOZCHWhiff)) / nrow(OutZoneCHWhiff) *100,1)
+
+CBChasePercentage = round((nrow(InPlayOZCB) + nrow(FoulballOZCB) + nrow(StrikeSwingingOZCB)) / nrow(OutZoneCB) *100,1)
+
+CBWhiffChasePercentage = round((nrow(InPlayOZCBWhiff) + nrow(FoulballOZCBWhiff) + nrow(StrikeSwingingOZCBWhiff)) / nrow(OutZoneCBWhiff) *100,1)
+
+SLChasePercentage = round((nrow(InPlayOZSL) + nrow(FoulballOZSL) + nrow(StrikeSwingingOZSL)) / nrow(OutZoneSL) *100,1)
+
+SLWhiffChasePercentage = round((nrow(InPlayOZSLWhiff) + nrow(FoulballOZSLWhiff) + nrow(StrikeSwingingOZSLWhiff)) / nrow(OutZoneSLWhiff) *100,1)
+
+SPINChasePercentage = round((nrow(InPlayOZSPIN) + nrow(FoulballOZSPIN) + nrow(StrikeSwingingOZSPIN)) / nrow(OutZoneSPIN) *100,1)
+
+SPINWhiffChasePercentage = round((nrow(InPlayOZSPINWhiff) + nrow(FoulballOZSPINWhiff) + nrow(StrikeSwingingOZSPINWhiff)) / nrow(OutZoneSPINWhiff) *100,1)
+```
+
+```{r}
+DT = data.table(
+  ID = c("b","b","b","a","a","c"),
+  a = 1:6,
+  b = 7:12,
+  c = 13:18
+)
+```
+
+```{r}
+FastDT = data.table(
+  Situation = c("ALL FB", "FB WHiff -> FB Again", "Difference"),
+  Usage = c(FastballUsage, FastAfterWhiffUsage, ""),
+  P = c(PFast, PFastWhiff, ""),
+  BF = c(BFFast, BFFastWhiff, ""),
+  Strike = c(StrikePercentageFast, StrikePercentageFastWhiff, (StrikePercentageFastWhiff - StrikePercentageFast)),
+  Whiff = c(WhiffPercentageFast, WhiffPercentageFastWhiff, (WhiffPercentageFastWhiff - WhiffPercentageFast)),
+  Avg = c(BAFast, BAFastWhiff, ((BAFastWhiff - BAFast)*100)),
+  Slg = c(SLGFast, SLGFastWhiff, ((SLGFastWhiff - SLGFast)*100)),
+  IZ = c(InZonePercentageFast, InZonePercentageFastWhiff, (InZonePercentageFastWhiff - InZonePercentageFast)),
+  Chase = c(FastChasePercentage, FastWhiffChasePercentage, (FastWhiffChasePercentage - FastChasePercentage))
+)
+
+CHDT = data.table(
+  Situation = c("ALL CH", "CH WHiff -> CH Again", "Difference"),
+  Usage = c(CH_Usage, CHAfterWhiffUsage, ""),
+  P = c(PCH, PCHWhiff, ""),
+  BF = c(BFCH, BFCHWhiff, ""),
+  Strike = c(StrikePercentageCH, StrikePercentageCHWhiff, (StrikePercentageCHWhiff - StrikePercentageCH)),
+  Whiff = c(WhiffPercentageCH, WhiffPercentageCHWhiff, (WhiffPercentageCHWhiff - WhiffPercentageCH)),
+  Avg = c(BACH, BACHWhiff, ((BACHWhiff - BACH)*100)),
+  Slg = c(SLGCH, SLGCHWhiff, ((SLGCHWhiff - SLGCH)*100)),
+  IZ = c(InZonePercentageCH, InZonePercentageCHWhiff, (InZonePercentageCHWhiff - InZonePercentageCH)),
+  Chase = c(CHChasePercentage, CHWhiffChasePercentage, (CHWhiffChasePercentage - CHChasePercentage))
+)
+
+CBDT = data.table(
+  Situation = c("ALL CB", "CB WHiff -> CB Again", "Difference"),
+  Usage = c(CB_Usage, CBAfterWhiffUsage, ""),
+  P = c(PCB, PCBWhiff, ""),
+  BF = c(BFCB, BFCBWhiff, ""),
+  Strike = c(StrikePercentageCB, StrikePercentageCBWhiff, (StrikePercentageCBWhiff - StrikePercentageCB)),
+  Whiff = c(WhiffPercentageCB, WhiffPercentageCBWhiff, (WhiffPercentageCBWhiff - WhiffPercentageCB)),
+  Avg = c(BACB, BACBWhiff, ((BACBWhiff - BACB)*100)),
+  Slg = c(SLGCB, SLGCBWhiff, ((SLGCBWhiff - SLGCB)*100)),
+  IZ = c(InZonePercentageCB, InZonePercentageCBWhiff, (InZonePercentageCBWhiff - InZonePercentageCB)),
+  Chase = c(CBChasePercentage, CBWhiffChasePercentage, (CBWhiffChasePercentage - CBChasePercentage))
+)
+
+SLDT = data.table(
+  Situation = c("ALL SL", "SL WHiff -> SL Again", "Difference"),
+  Usage = c(SL_Usage, SLAfterWhiffUsage, ""),
+  P = c(PSL, PSLWhiff, ""),
+  BF = c(BFSL, BFSLWhiff, ""),
+  Strike = c(StrikePercentageSL, StrikePercentageSLWhiff, (StrikePercentageSLWhiff - StrikePercentageSL)),
+  Whiff = c(WhiffPercentageSL, WhiffPercentageSLWhiff, (WhiffPercentageSLWhiff - WhiffPercentageSL)),
+  Avg = c(BASL, BASLWhiff, ((BASLWhiff - BASL)*100)),
+  Slg = c(SLGSL, SLGSLWhiff, ((SLGSLWhiff - SLGSL)*100)),
+  IZ = c(InZonePercentageSL, InZonePercentageSLWhiff, (InZonePercentageSLWhiff - InZonePercentageSL)),
+  Chase = c(SLChasePercentage, SLWhiffChasePercentage, (SLWhiffChasePercentage - SLChasePercentage))
+)
+
+SPINDT = data.table(
+  Situation = c("ALL SPIN", "SPIN WHiff -> SPIN Again", "Difference"),
+  Usage = c(SPIN_Usage, SPINAfterWhiffUsage, ""),
+  P = c(PSPIN, PSPINWhiff, ""),
+  BF = c(BFSPIN, BFSPINWhiff, ""),
+  Strike = c(StrikePercentageSPIN, StrikePercentageSPINWhiff, (StrikePercentageSPINWhiff - StrikePercentageSPIN)),
+  Whiff = c(WhiffPercentageSPIN, WhiffPercentageSPINWhiff, (WhiffPercentageSPINWhiff - WhiffPercentageSPIN)),
+  Avg = c(BASPIN, BASPINWhiff, ((BASPINWhiff - BASPIN)*100)),
+  Slg = c(SLGSPIN, SLGSPINWhiff, ((SLGSPINWhiff - SLGSPIN)*100)),
+  IZ = c(InZonePercentageSPIN, InZonePercentageSPINWhiff, (InZonePercentageSPINWhiff - InZonePercentageSPIN)),
+  Chase = c(SPINChasePercentage, SPINWhiffChasePercentage, (SPINWhiffChasePercentage - SPINChasePercentage))
+)
+
+
+```
+
