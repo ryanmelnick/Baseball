@@ -14,3 +14,7 @@ PitchIDAssignment.R - Pitch Identification Plots.  Created to assist new members
 
 
 UNC Pregame.xlsx - Pregame Hitters.pdf - Example scouting report.  Created using data from TruMedia.  Used by pitching coaches to create an actionable plan for how to pitch against opposing hitters
+
+
+
+Percentile_Ranks.Rmd - Assignment for Wake Pitching Coaches - Created a pitching report for a Wake Forest player using percentile ranks from the cleaned TrackMan Guidebook file.
