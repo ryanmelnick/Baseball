@@ -1,0 +1,115 @@
+---
+title: "PercentileRanks"
+author: "Ryan Melnick"
+date: "10/4/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# need to change file path to be able to read in tmall.RDS on your computer
+data <- readRDS('~/Downloads/tmall.RDS')
+
+# note that any 4fb with SpinAxis below 130 is most likely 2fb
+
+install.packages("dplyr")    # alternative installation of the %>%
+library(dplyr)    # alternatively, this also loads %>%
+library(ggplot2)
+library(tidyverse)
+library(mgcv)
+```
+
+```{r}
+# Cleaning Up Data - Unifying pitches by pitch type to have the same tag
+data <- data %>% mutate(TaggedPitchType = ifelse(TaggedPitchType == "Fastball", "FF", TaggedPitchType))
+data <- data %>% mutate(TaggedPitchType = ifelse(TaggedPitchType == "Sinker", "FT", TaggedPitchType))
+data <- data %>% mutate(TaggedPitchType = ifelse(TaggedPitchType == "FB", "FF", TaggedPitchType))
+data <- data %>% mutate(TaggedPitchType = ifelse(TaggedPitchType == "Slider", "SL", TaggedPitchType))
+data <- data %>% mutate(TaggedPitchType = ifelse(TaggedPitchType == "Curveball", "CB", TaggedPitchType))
+data <- data %>% mutate(TaggedPitchType = ifelse(TaggedPitchType == "Changeup", "CH", TaggedPitchType))
+data <- data %>% mutate(TaggedPitchType = ifelse(TaggedPitchType == "ChangeUp", "CH", TaggedPitchType))
+data <- data %>% mutate(TaggedPitchType = ifelse(TaggedPitchType == "Cutter", "CT", TaggedPitchType))
+data <- data %>% mutate(TaggedPitchType = ifelse(TaggedPitchType == "Knuckleball", "KN", TaggedPitchType))
+data <- data %>% mutate(TaggedPitchType = ifelse(TaggedPitchType == "Splitter", "SPL", TaggedPitchType))
+
+
+data <- data %>% mutate(AutoPitchType = ifelse(AutoPitchType == "Fastball", "FF", AutoPitchType))
+data <- data %>% mutate(AutoPitchType = ifelse(AutoPitchType == "Sinker", "FT", AutoPitchType))
+data <- data %>% mutate(AutoPitchType = ifelse(AutoPitchType == "FB", "FF", AutoPitchType))
+data <- data %>% mutate(AutoPitchType = ifelse(AutoPitchType == "Slider", "SL", AutoPitchType))
+data <- data %>% mutate(AutoPitchType = ifelse(AutoPitchType == "Curveball", "CB", AutoPitchType))
+data <- data %>% mutate(AutoPitchType = ifelse(AutoPitchType == "Changeup", "CH", AutoPitchType))
+data <- data %>% mutate(AutoPitchType = ifelse(AutoPitchType == "ChangeUp", "CH", AutoPitchType))
+data <- data %>% mutate(AutoPitchType = ifelse(AutoPitchType == "Cutter", "CT", AutoPitchType))
+data <- data %>% mutate(AutoPitchType = ifelse(AutoPitchType == "Knuckleball", "KN", AutoPitchType))
+data <- data %>% mutate(AutoPitchType = ifelse(AutoPitchType == "Splitter", "SPL", AutoPitchType))
+data <- data %>% mutate(AutoPitchType = ifelse(AutoPitchType == "Four-Seam", "FF", AutoPitchType))
+```
+
+```{r}
+ACCSEC <- subset(data, PitcherTeam == "WAK_DEA" | PitcherTeam == "BOC_EAG" | PitcherTeam == "CLE_TIG" | PitcherTeam == "DUK_BLU" | PitcherTeam == "FLO_SEM" | PitcherTeam == "GIT_YEL" | PitcherTeam == "LOU_CAR" | PitcherTeam == "MIA_HUR" | PitcherTeam == "NOR_TAR" | PitcherTeam == "NOR_WOL" | PitcherTeam == "NOT_IRI" | PitcherTeam == "PIT_PAN" | PitcherTeam == "VIR_CAV" | PitcherTeam == "VT" | PitcherTeam == "VIR_TEC" | PitcherTeam == "ALA_CRI" | PitcherTeam == "ARK_RAZ" | PitcherTeam == "AUB_TIG" | PitcherTeam == "FLO_GAT" | PitcherTeam == "GEO_BUL" | PitcherTeam == "KEN_WIL" | PitcherTeam == "LSU_TIG" | PitcherTeam == "OLE_REB" | PitcherTeam == "MSU_BDG" | PitcherTeam == "MIZ_TIG" | PitcherTeam == "SOU_GAM" | PitcherTeam == "TEN_VOL" | PitcherTeam == "TEX_AGG" | PitcherTeam == "VAN_COM")
+
+ACCSECPitchers <- subset(ACCSEC, select = c("Date", "Pitcher", "PitcherId", "PitcherThrows", "PitcherTeam", "Batter", "BatterId", "BatterSide", "BatterTeam", "Inning", "Outs", "Balls", "Strikes", "TaggedPitchType", "AutoPitchType", "PitchCall", "KorBB", "HitType", "PlayResult", "OutsOnPlay", "RunsScored", "RelSpeed", "VertRelAngle", "HorzRelAngle", "SpinRate", "SpinAxis", "RelHeight", "RelSide", "Extension", "InducedVertBreak", "HorzBreak", "PlateLocHeight", "PlateLocSide", "ZoneSpeed", "VertApprAngle", "HorzApprAngle", "ZoneTime", "ExitSpeed", "Angle", "pfxx", "pfxz", "PitchUID", "SpinEff", "TrueSpin"))
+```
+
+```{r}
+## ACCSEC RHP FF
+ACCSEC_RHP_FF <- subset(ACCSECPitchers, TaggedPitchType == "FF" & PitcherThrows == "Right" & SpinAxis < 225 & SpinAxis > 165 & RelSpeed > 75 & InducedVertBreak > -3)
+
+## ACCSEC LHP FF
+ACCSEC_LHP_FF <- subset(ACCSECPitchers, TaggedPitchType == "FF" & PitcherThrows == "Left" & RelSpeed > 80 & SpinAxis > 135 & SpinAxis < 195 & InducedVertBreak > -3)
+
+## ACCSEC RHP FT
+ACCSEC_RHP_FT <- subset(ACCSECPitchers, (TaggedPitchType == "FT" | (TaggedPitchType == "FF" & SpinAxis > 225)) & PitcherThrows == "Right" & SpinAxis > 225 & RelSpeed > 75 & InducedVertBreak > -3)
+
+## ACCSEC LHP FT
+ACCSEC_LHP_FT <- subset(ACCSECPitchers, (TaggedPitchType == "FT" | (TaggedPitchType == "FF" & SpinAxis < 135)) & PitcherThrows == "Left" & SpinAxis < 135 & RelSpeed > 75 & InducedVertBreak > -3)
+
+## ACCSEC RHP SL
+ACCSEC_RHP_SL <- subset(ACCSECPitchers, TaggedPitchType == "SL" & PitcherThrows == "Right" & (SpinAxis < 200 | SpinAxis > 300) & HorzBreak < 7 & RelSpeed > 65)
+
+## ACCSEC LHP SL
+ACCSEC_LHP_SL <- subset(ACCSECPitchers, TaggedPitchType == "SL" & PitcherThrows == "Left" & (SpinAxis > 180 | SpinAxis < 135) & HorzBreak > -7)
+
+## ACCSEC RHP CB
+ACCSEC_RHP_CB <- subset(ACCSECPitchers, TaggedPitchType == "CB" & PitcherThrows == "Right" & RelSpeed < 90 & (SpinAxis < 135 | SpinAxis > 195) & InducedVertBreak < 3 & HorzBreak < 5)
+
+## ACCSEC LHP CB
+ACCSEC_LHP_CB <- subset(ACCSECPitchers, TaggedPitchType == "CB" & PitcherThrows == "Left" & InducedVertBreak < 3 & HorzBreak > -5 & (SpinAxis < 165 | SpinAxis > 262.5))
+
+## ACCSEC RHP CH
+ACCSEC_RHP_CH <- subset(ACCSECPitchers, TaggedPitchType == "CH" & PitcherThrows == "Right" & RelSpeed > 65 & SpinAxis > 165 & SpinAxis < 330)
+
+## ACCSEC LHP CH
+ACCSEC_LHP_CH <- subset(ACCSECPitchers, TaggedPitchType == "CH" & PitcherThrows == "Left" & RelSpeed > 65 & SpinAxis < 195 & SpinAxis > 65)
+
+## ACCSEC RHP CT
+ACCSEC_RHP_CT <- subset(ACCSECPitchers, TaggedPitchType == "CT" & PitcherThrows == "Right")
+
+## ACCSEC LHP CT
+ACCSEC_LHP_CT <- subset(ACCSECPitchers, TaggedPitchType == "CT" & PitcherThrows == "Left")
+```
+
+```{r}
+ecdf(ACCSEC_RHP_FF$VertRelAngle)(-2.66)
+ecdf(ACCSEC_RHP_SL$VertRelAngle)(-0.14)
+ecdf(ACCSEC_RHP_CH$VertRelAngle)(-1.3)
+
+ecdf(ACCSEC_RHP_FF$HorzRelAngle)(-2.11)
+ecdf(ACCSEC_RHP_SL$HorzRelAngle)(-1.84)
+ecdf(ACCSEC_RHP_CH$HorzRelAngle)(-1.93)
+```
+
+```{r}
+MasseyFF <- subset(wakeData, TaggedPitchType == "Fastball" & Pitcher == "Massey, Michael")
+MasseySL <- subset(wakeData, TaggedPitchType == "Slider" & Pitcher == "Massey, Michael")
+MasseyCH <- subset(wakeData, TaggedPitchType == "ChangeUp" & Pitcher == "Massey, Michael")
+mean(MasseyFF$RelSpeed, na.rm = TRUE)
+mean(MasseySL$RelSpeed, na.rm = TRUE)
+mean(MasseyCH$RelSpeed, na.rm = TRUE)
+
+```
+
